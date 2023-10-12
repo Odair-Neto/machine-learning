@@ -26,15 +26,28 @@ for linha in linhas:
                           float(sample[5]), float(sample[6]), int(sample[7])))
 
 input_data = []
-output_data = []
+gravidade = []
+gravidade_2 =[]
+classe_grav = []
 for sample in samples:
     input_data.append([sample.qpa, sample.pulso, sample.resp])
-    output_data.append(sample.gravidade)
+    gravidade.append(sample.gravidade)
+    gravidade_2.append([sample.gravidade])
+    classe_grav.append(sample.classe_grav)
 
 # Parameters
+reg = DecisionTreeRegressor(min_samples_split=20).fit(input_data, gravidade)
+print("Regression tree score:")
+print(reg.score(input_data, gravidade))
+clf = DecisionTreeClassifier(criterion="entropy", min_samples_split=20).fit(gravidade_2, classe_grav)
+print("Classifier tree score:")
+#print(clf.score(input_data, classe_grav))
+reg.score()
 plt.figure()
-clf = DecisionTreeRegressor(min_samples_split=20).fit(input_data, output_data)
-print(clf.score(input_data, output_data))
+plot_tree(reg, filled=True, fontsize=4)
+plt.title("Árvore de Regressão - Gravidade")
+
+plt.figure()
 plot_tree(clf, filled=True, fontsize=4)
-plt.title("Arvore de decisao - gravidade")
+plt.title("Árvore de Decisão - Classe de Gravidade")
 plt.show()
