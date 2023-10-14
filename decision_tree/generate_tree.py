@@ -1,10 +1,4 @@
-from sklearn.datasets import load_iris
-
 import matplotlib.pyplot as plt
-import numpy as np
-
-from sklearn.datasets import load_iris
-from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree import plot_tree
 
@@ -36,18 +30,23 @@ for sample in samples:
     classe_grav.append(sample.classe_grav)
 
 # Parameters
-reg = DecisionTreeRegressor(min_samples_split=20).fit(input_data, gravidade)
+reg = DecisionTreeRegressor(min_samples_split=50).fit(input_data, gravidade)
 print("Regression tree score:")
 print(reg.score(input_data, gravidade))
 clf = DecisionTreeClassifier(criterion="entropy", min_samples_split=20).fit(gravidade_2, classe_grav)
 print("Classifier tree score:")
-#print(clf.score(input_data, classe_grav))
-reg.score()
+#print(clf.score(gravidade_2, classe_grav))
+gravidade_estimada = reg.predict(input_data)
+gravidade_estimada_2 = []
+for grav in gravidade_estimada:
+    gravidade_estimada_2.append([grav])
+print(clf.score(gravidade_estimada_2, classe_grav))
+
 plt.figure()
-plot_tree(reg, filled=True, fontsize=4)
+plot_tree(reg, filled=True, fontsize=6)
 plt.title("Árvore de Regressão - Gravidade")
 
 plt.figure()
-plot_tree(clf, filled=True, fontsize=4)
+plot_tree(clf, filled=True, fontsize=7)
 plt.title("Árvore de Decisão - Classe de Gravidade")
 plt.show()
