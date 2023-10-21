@@ -1,8 +1,9 @@
-from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn import preprocessing
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import plot_tree
 import matplotlib.pyplot as plt
 from random import shuffle
-from numpy import ravel
 
 class Sample():
     def __init__(self, id, qpa, pulso, resp, gravidade, classe_grav):
@@ -15,7 +16,7 @@ class Sample():
 
 samples_training = []
 samples_testing = []
-arq = open("../treino_sinais_vitais_com_label.txt")
+arq = open("treino_sinais_vitais_com_label.txt")
 linhas = arq.readlines()
 shuffle(linhas)
 n_linha=0
@@ -42,8 +43,6 @@ for sample in samples_training:
 
 scaler_in = preprocessing.StandardScaler().fit(input_data_training)
 scaler_grav = preprocessing.StandardScaler().fit(gravidade_training)
-scaler_class_grav = preprocessing.StandardScaler().fit(classe_grav_training)
-print(scaler_in.mean_)
 X_scaled = scaler_in.transform(input_data_training)
 G_scaled = scaler_grav.transform(gravidade_training)
 
@@ -55,28 +54,14 @@ reg.fit(X_scaled, G_scaled)
 print("============TRAINING============")
 print("Regression MLP score:")
 print(reg.score(X_scaled, G_scaled))
-# print("Regression MLP layers:")
-# print(reg.n_layers_)
-# print("Regression MLP outputs:")
-# print(reg.n_outputs_)
-# print("Regression MLP bias vectors:")
-# print(reg.intercepts_)
-# print("Regression MLP features:")
-# print(reg.n_features_in_)
-# print("Regression MLP weights:")
-# print(reg.coefs_)
-clf = MLPClassifier(hidden_layer_sizes=(10,10,),activation="logistic",
-                    learning_rate_init=0.01, alpha=0.01,
-                    max_iter=2000, random_state=42).fit(X_scaled, classe_grav_training)
-print("Classifier MLP score:")
-# gravidade_estimada = reg.predict(X_scaled)
-# gravidade_buffer = []
-# for grav in gravidade_estimada:
-#     gravidade_buffer.append([grav])
-print(clf.score(X_scaled, classe_grav_training))
-# print("Classification MLP weights:")
-# print(clf.coefs_)
-#print(clf.score(gravidade_2, classe_grav))
+clf = DecisionTreeClassifier(criterion="entropy",
+                              min_samples_split=10).fit(G_scaled, classe_grav_training)
+print("Classifier tree score:")
+gravidade_estimada = reg.predict(X_scaled)
+gravidade_buffer = []
+for grav in gravidade_estimada:
+    gravidade_buffer.append([grav])
+print(clf.score(gravidade_buffer, classe_grav_training))
 
 #============TESTING=================================================================
 input_data_testing = []
@@ -94,4 +79,14 @@ print("============TESTING============")
 print("Regression MLP score:")
 print(reg.score(X_test_scaled, G_test_scaled))
 print("Classifier MLP score:")
-print(clf.score(X_test_scaled, classe_grav_testing))
+gravidade_estimada = reg.predict(X_test_scaled)
+gravidade_buffer = []
+for grav in gravidade_estimada:
+    gravidade_buffer.append([grav])
+print(clf.score(gravidade_buffer, classe_grav_testing))
+
+#============PLOTTING=================================================================
+plt.figure()
+plot_tree(clf, filled=True, fontsize=7)
+plt.title("Árvore de Decisão - Classe de Gravidade")
+plt.show()
