@@ -2,6 +2,10 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree import plot_tree
 
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
+from random import shuffle
+
 class Sample():
     def __init__(self, id, qpa, pulso, resp, gravidade, classe_grav):
         self.id = id
@@ -11,37 +15,69 @@ class Sample():
         self.gravidade = gravidade
         self.classe_grav = classe_grav
 
-samples = []
+samples_training = []
+samples_testing = []
 arq = open("../treino_sinais_vitais_com_label.txt")
 linhas = arq.readlines()
+shuffle(linhas)
+n_linha=0
 for linha in linhas:
+    n_linha+=1
     sample = linha.split(',')
-    samples.append(Sample(int(sample[0]), float(sample[3]), float(sample[4]), 
+    if n_linha > 0.7*len(linhas):
+        samples_training.append(Sample(int(sample[0]), float(sample[3]), float(sample[4]), 
+                          float(sample[5]), float(sample[6]), int(sample[7])))
+    else:
+        samples_testing.append(Sample(int(sample[0]), float(sample[3]), float(sample[4]), 
                           float(sample[5]), float(sample[6]), int(sample[7])))
 
-input_data = []
-gravidade = []
-gravidade_2 =[]
-classe_grav = []
-for sample in samples:
-    input_data.append([sample.qpa, sample.pulso, sample.resp])
-    gravidade.append(sample.gravidade)
-    gravidade_2.append([sample.gravidade])
-    classe_grav.append(sample.classe_grav)
+#============TRAINING=================================================================
+input_data_training = []
+gravidade_training = []
+gravidade_training_clf = []
+classe_grav_training = []
+for sample in samples_training:
+    input_data_training.append([sample.qpa, sample.pulso, sample.resp])
+    gravidade_training.append(sample.gravidade)
+    gravidade_training_clf.append([sample.gravidade])
+    classe_grav_training.append(sample.classe_grav)
 
 # Parameters
-reg = DecisionTreeRegressor(min_samples_split=50).fit(input_data, gravidade)
+reg = DecisionTreeRegressor(min_samples_split=50).fit(input_data_training, gravidade_training)
+print("============TRAINING============")
 print("Regression tree score:")
-print(reg.score(input_data, gravidade))
-clf = DecisionTreeClassifier(criterion="entropy", min_samples_split=20).fit(gravidade_2, classe_grav)
+print(reg.score(input_data_training, gravidade_training))
+clf = DecisionTreeClassifier(criterion="entropy",
+                              min_samples_split=10).fit(gravidade_training_clf, classe_grav_training)
 print("Classifier tree score:")
-#print(clf.score(gravidade_2, classe_grav))
-gravidade_estimada = reg.predict(input_data)
-gravidade_estimada_2 = []
+gravidade_estimada = reg.predict(input_data_training)
+gravidade_buffer = []
 for grav in gravidade_estimada:
-    gravidade_estimada_2.append([grav])
-print(clf.score(gravidade_estimada_2, classe_grav))
+    gravidade_buffer.append([grav])
+print(clf.score(gravidade_buffer, classe_grav_training))
+#print(clf.score(gravidade_2, classe_grav))
 
+#============TESTING=================================================================
+input_data_testing = []
+gravidade_testing = []
+classe_grav_testing = []
+for sample in samples_testing:
+    input_data_testing.append([sample.qpa, sample.pulso, sample.resp])
+    gravidade_testing.append(sample.gravidade)
+    classe_grav_testing.append(sample.classe_grav)
+
+print("")
+print("============TESTING============")
+print("Regression tree score:")
+print(reg.score(input_data_testing, gravidade_testing))
+print("Classifier tree score:")
+gravidade_estimada = reg.predict(input_data_testing)
+gravidade_buffer = []
+for grav in gravidade_estimada:
+    gravidade_buffer.append([grav])
+print(clf.score(gravidade_buffer, classe_grav_testing))
+
+#============PLOTTING=================================================================
 plt.figure()
 plot_tree(reg, filled=True, fontsize=6)
 plt.title("Árvore de Regressão - Gravidade")
